@@ -1,0 +1,29 @@
+#!/usr/bin/python3
+
+from telnetlib import Telnet
+import json
+import requests
+import argparse
+
+def getmyip_http():
+    resp = requests.get('http://ipinfo.io/json')
+    if resp.status_code != 200:
+        raise ValueError('GET error {}'.format(resp.status_code))
+    parsed_body = resp.json()
+    return f'{parsed_body["ip"]} ({parsed_body["city"]}, {parsed_body["region"]}, {parsed_body["country"]})'
+
+
+def getmyip_telnet():
+    with Telnet('telnetmyip.com') as tn:
+        return json.loads(tn.read_all())['ip']
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Retrieve my ip adress')
+    parser.add_argument('-t', '--telnet', action='store_true',
+                help='use telnet instead of http')
+
+    args = parser.parse_args()
+    if args.telnet:
+        print(getmyip_telnet())
+    else:
+        print(getmyip_http())
