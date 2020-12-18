@@ -1,0 +1,8 @@
+#!/bin/bash
+
+PROG=$HOME/projects/alarm/alarm
+if [[ -f "$PROG" ]]; then
+    $PROG "$@"
+else
+  echo "no valid alarm configuration"
+fi
