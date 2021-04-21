@@ -1,0 +1,49 @@
+#!/usr/bin/python3
+
+import requests
+import argparse
+import os
+
+def validate(from_filenames, to_filenames):
+    errors = []
+    if len(from_filenames) != len(to_filenames):
+        errors.append('number of input files must agree')
+    for f in from_filenames:
+        if not is_file(f):
+            errors.append(f'{f} is not a file')
+    for f in to_filenames:
+        if not is_file(f):
+            errors.append(f'{f} is not a file')
+    
+    return errors
+
+def is_file(path):
+    return os.path.isfile(path)
+
+def process(from_filenames, to_filenames, verbose, dry_run):
+    for inputfilename, outputfilename in zip(from_filenames, to_filenames):
+        _, extension = os.path.splitext(inputfilename)
+        filename, _ = os.path.splitext(outputfilename)
+        if verbose or dry_run:
+            print (inputfilename + ' --> ' + filename + extension)
+        if not dry_run:
+            os.rename(inputfilename, filename + extension)
+        
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Rename files')
+    parser.add_argument('-f', '--from-filenames', nargs='+',
+                    help='files to rename')
+    parser.add_argument('-t', '--to-filenames', nargs='+',
+                    help='files to rename')
+    parser.add_argument('-d', '--dry-run', action='store_true',
+                help='don\'t change files; just print pontential results')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                help='explain what is being done')
+    args = parser.parse_args()
+    errors = validate(args.from_filenames, args.to_filenames)
+    if errors:
+        print('Validation errors:\n' + ',\n'.join(errors))
+    else:
+        process(args.from_filenames, args.to_filenames, args.verbose, args.dry_run)
+
+
