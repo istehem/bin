@@ -18,7 +18,7 @@ def getmyip_telnet():
         return json.loads(tn.read_all())['ip']
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Retrieve my ip adress')
+    parser = argparse.ArgumentParser(description='Retrieve my ip address')
     parser.add_argument('-t', '--telnet', action='store_true',
                 help='use telnet instead of http')
 
