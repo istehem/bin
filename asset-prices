@@ -11,6 +11,7 @@ class CryptoCurrency(Enum):
     ETH = 'ETH'
     ADA = 'ADA'
     SOL = 'SOL'
+    XRP = 'XRP'
     def __str__(self):
         return str(self.value)
 
@@ -22,6 +23,17 @@ class Urls():
     def crypto(cls) -> str:
         return 'https://api.coinlore.net/api/tickers/'
 
+class ArrowLiterals:
+    _RED = '\033[91m'
+    _GREEN = '\033[92m'
+    _ENDC = '\033[0m'
+    
+    @classmethod
+    def arrow_up(cls) -> str:
+        return f'{cls._GREEN}\u25B2{cls._ENDC}'
+    @classmethod
+    def arrow_down(cls) -> str:
+        return f'{cls._RED}\u25BC{cls._ENDC}'
 
 def asset_values(crypto_currencies):
     resp = requests.get(Urls.crypto())
@@ -37,7 +49,17 @@ def asset_values(crypto_currencies):
 
 def format_crypto_currency(c):
     price = f'{float(c["price_usd"]):,}' 
-    return f'{c["name"]: <8} ({c["symbol"]}): {price.rjust(9)} USD'
+    return (
+            f'{c["name"]: <8} ({c["symbol"]}): {price.rjust(9)} USD, '
+            f'24h {format_trend(c["percent_change_24h"])}, '
+            f'7d {format_trend(c["percent_change_7d"])}')
+
+def format_trend(percent_as_string) -> str:
+    percent = float(percent_as_string)
+    if float(percent) > 0:
+        return f'{percent: <4.2f}% {ArrowLiterals.arrow_up()}'
+    else:
+        return f'{abs(percent): <4.2f}% {ArrowLiterals.arrow_down()}'
 
 if __name__ == '__main__':
     default_currencies = [CryptoCurrency.BTC, CryptoCurrency.ETH, CryptoCurrency.ADA]
