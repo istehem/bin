@@ -39,7 +39,6 @@ def asset_values(crypto_currencies):
     resp = requests.get(Urls.crypto())
     if resp.status_code != 200:
         raise ValueError('GET error {}'.format(resp.status_code))
-    parsed_body = resp.json()
     data = resp.json()['data']
     rows = []
     for c in data:
