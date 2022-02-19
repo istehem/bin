@@ -1,0 +1,57 @@
+#!/usr/bin/python3
+
+import json
+import requests
+import argparse
+from enum import Enum, unique
+
+@unique
+class CryptoCurrency(Enum):
+    BTC = 'BTC'
+    ETH = 'ETH'
+    ADA = 'ADA'
+    SOL = 'SOL'
+    def __str__(self):
+        return str(self.value)
+
+class Urls():
+    @classmethod
+    def metals(cls) -> str:
+        raise NotImplementedError()
+    @classmethod
+    def crypto(cls) -> str:
+        return 'https://api.coinlore.net/api/tickers/'
+
+
+def asset_values(crypto_currencies):
+    resp = requests.get(Urls.crypto())
+    if resp.status_code != 200:
+        raise ValueError('GET error {}'.format(resp.status_code))
+    parsed_body = resp.json()
+    data = resp.json()['data']
+    rows = []
+    for c in data:
+        if c['symbol'] in [ str(ce) for ce in crypto_currencies ]:
+            rows.append(format_crypto_currency(c))
+    print('\n'.join(rows))
+
+def format_crypto_currency(c):
+    price = f'{float(c["price_usd"]):,}' 
+    return f'{c["name"]: <8} ({c["symbol"]}): {price.rjust(9)} USD'
+
+if __name__ == '__main__':
+    default_currencies = [CryptoCurrency.BTC, CryptoCurrency.ETH, CryptoCurrency.ADA]
+    default_currencies_help = ', '.join([ str(c) for c in default_currencies ])
+    parser = argparse.ArgumentParser(description='Show asset prices')
+    parser.add_argument(
+                '-c', 
+                '--crypto-currencies',
+                nargs='+',
+                type=CryptoCurrency,
+                help=f'show prices for crypto currencies (default: {default_currencies_help})')
+
+    args = parser.parse_args()
+    if args.crypto_currencies:
+        asset_values(args.crypto_currencies)
+    else:
+        asset_values(default_currencies)
