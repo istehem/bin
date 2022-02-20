@@ -56,9 +56,15 @@ def format_crypto_currency(c):
 def format_trend(percent_as_string) -> str:
     percent = float(percent_as_string)
     if float(percent) > 0:
-        return f'{percent: <4.2f}% {ArrowLiterals.arrow_up()}'
+        return f'{percent: <5.2f}% {ArrowLiterals.arrow_up()}'
     else:
-        return f'{abs(percent): <4.2f}% {ArrowLiterals.arrow_down()}'
+        return f'{abs(percent): <5.2f}% {ArrowLiterals.arrow_down()}'
+
+def crypto_currency_parser(s):
+    try:
+        return CryptoCurrency[s.upper()]
+    except KeyError:
+        raise argparse.ArgumentTypeError(f'invalid {CryptoCurrency.__name__} value \'{s}\'')
 
 if __name__ == '__main__':
     default_currencies = [CryptoCurrency.BTC, CryptoCurrency.ETH, CryptoCurrency.ADA]
@@ -68,7 +74,8 @@ if __name__ == '__main__':
                 '-c', 
                 '--crypto-currencies',
                 nargs='+',
-                type=CryptoCurrency,
+                #type=CryptoCurrency, #lambda s: CryptoCurrency[s.upper()],
+                type=lambda s: crypto_currency_parser(s),
                 help=f'show prices for crypto currencies (default: {default_currencies_help})')
 
     args = parser.parse_args()
