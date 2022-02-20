@@ -35,7 +35,7 @@ class ArrowLiterals:
     def arrow_down(cls) -> str:
         return f'{cls._RED}\u25BC{cls._ENDC}'
 
-def asset_values(crypto_currencies):
+def asset_values(crypto_currencies, show_cap):
     resp = requests.get(Urls.crypto())
     if resp.status_code != 200:
         raise ValueError('GET error {}'.format(resp.status_code))
@@ -43,17 +43,19 @@ def asset_values(crypto_currencies):
     rows = []
     for c in data:
         if c['symbol'] in [ str(ce) for ce in crypto_currencies ]:
-            rows.append(format_crypto_currency(c))
+            rows.append(format_crypto_currency(c, show_cap))
     print('\n'.join(rows))
 
-def format_crypto_currency(c):
+def format_crypto_currency(c, show_cap):
     price = f'{float(c["price_usd"]):,}'
-    cap = f'{float(c["market_cap_usd"]):,}' 
-    return (
-            f'{c["name"]: <8} ({c["symbol"]}): {price.rjust(9)} USD, '
-            f'24h {format_trend(c["percent_change_24h"])}, '
-            f'7d {format_trend(c["percent_change_7d"])}, '
-            f'cap {cap.rjust(18)} USD')
+    cap = f'{float(c["market_cap_usd"]):,}'
+    row = []
+    row.append(f'{c["name"]: <8} ({c["symbol"]}): {price.rjust(9)} USD')
+    row.append(f'24h {format_trend(c["percent_change_24h"])}')
+    row.append(f'7d {format_trend(c["percent_change_7d"])}')
+    if show_cap:
+        row.append(f'cap {cap.rjust(18)} USD')
+    return ', '.join(row)
 
 def format_trend(percent_as_string) -> str:
     percent = float(percent_as_string)
@@ -72,6 +74,7 @@ if __name__ == '__main__':
     default_currencies = [CryptoCurrency.BTC, CryptoCurrency.ETH, CryptoCurrency.ADA]
     default_currencies_help = ', '.join([ str(c) for c in default_currencies ])
     parser = argparse.ArgumentParser(description='Show asset prices')
+    parser = argparse.ArgumentParser(description='Show asset prices')
     parser.add_argument(
                 '-c', 
                 '--crypto-currencies',
@@ -79,9 +82,11 @@ if __name__ == '__main__':
                 #type=CryptoCurrency, #lambda s: CryptoCurrency[s.upper()],
                 type=lambda s: crypto_currency_parser(s),
                 help=f'show prices for crypto currencies (default: {default_currencies_help})')
+    parser.add_argument('-mc', '--market-capitalization', action='store_true',
+                            help='show market capitalization')
 
     args = parser.parse_args()
     if args.crypto_currencies:
-        asset_values(args.crypto_currencies)
+        asset_values(args.crypto_currencies, args.market_capitalization)
     else:
-        asset_values(default_currencies)
+        asset_values(default_currencies, args.market_capitalization)
