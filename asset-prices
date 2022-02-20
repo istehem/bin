@@ -47,11 +47,13 @@ def asset_values(crypto_currencies):
     print('\n'.join(rows))
 
 def format_crypto_currency(c):
-    price = f'{float(c["price_usd"]):,}' 
+    price = f'{float(c["price_usd"]):,}'
+    cap = f'{float(c["market_cap_usd"]):,}' 
     return (
             f'{c["name"]: <8} ({c["symbol"]}): {price.rjust(9)} USD, '
             f'24h {format_trend(c["percent_change_24h"])}, '
-            f'7d {format_trend(c["percent_change_7d"])}')
+            f'7d {format_trend(c["percent_change_7d"])}, '
+            f'cap {cap.rjust(18)} USD')
 
 def format_trend(percent_as_string) -> str:
     percent = float(percent_as_string)
