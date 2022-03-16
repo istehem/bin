@@ -18,14 +18,14 @@ class CryptoCurrency(Enum):
 class Urls():
     @classmethod
     def metals(cls) -> str:
-        raise NotImplementedError()
+        return 'https://api.publicapis.org/entries'
     @classmethod
     def crypto(cls) -> str:
         return 'https://api.coinlore.net/api/tickers/'
 
 class ArrowLiterals:
-    _RED = '\033[91m'
-    _GREEN = '\033[92m'
+    _RED = '\033[31m'
+    _GREEN = '\033[32m'
     _ENDC = '\033[0m'
     
     @classmethod
@@ -70,6 +70,11 @@ def crypto_currency_parser(s):
     except KeyError:
         raise argparse.ArgumentTypeError(f'invalid {CryptoCurrency.__name__} value \'{s}\'')
 
+def gold_price():
+    resp = requests.get(Urls.metals())
+    if resp.status_code != 200:
+        raise ValueError('GET error {}'.format(resp.status_code))
+
 if __name__ == '__main__':
     default_currencies = [CryptoCurrency.BTC, CryptoCurrency.ETH, CryptoCurrency.ADA]
     default_currencies_help = ', '.join([ str(c) for c in default_currencies ])
@@ -79,7 +84,6 @@ if __name__ == '__main__':
                 '-c', 
                 '--crypto-currencies',
                 nargs='+',
-                #type=CryptoCurrency, #lambda s: CryptoCurrency[s.upper()],
                 type=lambda s: crypto_currency_parser(s),
                 help=f'show prices for crypto currencies (default: {default_currencies_help})')
     parser.add_argument('-mc', '--market-capitalization', action='store_true',
