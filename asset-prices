@@ -50,7 +50,7 @@ class ArrowLiterals:
     def arrow_down(cls) -> str:
         return f'{cls._RED}\u25BC{cls._ENDC}'
 
-def asset_values(crypto_currencies, show_cap):
+def crypto_prices(crypto_currencies, show_cap) -> str:
     resp = requests.get(Urls.crypto())
     if resp.status_code != 200:
         raise ValueError('GET error {}'.format(resp.status_code))
@@ -59,7 +59,12 @@ def asset_values(crypto_currencies, show_cap):
     for c in data:
         if c['symbol'] in [ str(ce) for ce in crypto_currencies ]:
             rows.append(format_crypto_currency(c, show_cap))
-    print('\n'.join(rows))
+    return '\n'.join(rows)
+
+def asset_values(crypto_currencies, show_cap, show_gold_price):
+    print(crypto_prices(crypto_currencies, show_cap))
+    if show_gold_price:
+        print(f'\n{gold_price()}')
 
 def format_crypto_currency(c, show_cap):
     price = f'{float(c["price_usd"]):,}'
@@ -98,7 +103,7 @@ def gold_trend(start_date, end_date) -> str:
     return json_resp['rates'][f'{start_date}:{end_date}'][str(Metals.XAU)]['change_pct']
 
 
-def gold_price():
+def gold_price() -> str:
     params = dict()
     params['symbols'] = Metals.XAU
     resp = requests.get(Urls.metals_price(), params = params)
@@ -115,7 +120,7 @@ def gold_price():
     row.append(f'Gold ({Metals.XAU}): {1/rate:.2f} {base} {unit}')
     row.append(f'24h {format_trend(day_trend)}')
     row.append(f'7d {format_trend(week_trend)}')
-    print(', '.join(row))
+    return ', '.join(row)
 
 if __name__ == '__main__':
     default_currencies = [CryptoCurrency.BTC, CryptoCurrency.ETH, CryptoCurrency.ADA]
@@ -134,9 +139,7 @@ if __name__ == '__main__':
                             help='show gold price')
 
     args = parser.parse_args()
-    if args.gold_price:
-        gold_price()
-    elif args.crypto_currencies:
-        asset_values(args.crypto_currencies, args.market_capitalization)
+    if args.crypto_currencies:
+        asset_values(args.crypto_currencies, args.market_capitalization, args.gold_price)
     else:
-        asset_values(default_currencies, args.market_capitalization)
+        asset_values(default_currencies, args.market_capitalization, args.gold_price)
