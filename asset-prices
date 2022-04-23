@@ -3,6 +3,8 @@
 import json
 import requests
 import argparse
+from datetime import date
+from datetime import timedelta
 from enum import Enum, unique
 
 @unique
@@ -16,9 +18,16 @@ class CryptoCurrency(Enum):
         return str(self.value)
 
 class Urls():
+    _GOLD_API_KEY = 'k2p0hdizqchkv78o18e5za0k4zl1idzj36e8mow8354h95uxf85uzptvrjom'
+    _GOLD_API_KEY_PARAM = 'access_key'
     @classmethod
-    def metals(cls) -> str:
-        return 'https://api.publicapis.org/entries'
+    def metals_price(cls) -> str:
+        return ('https://metals-api.com/api/latest?' +
+            f'{cls._GOLD_API_KEY_PARAM}={cls._GOLD_API_KEY}')
+    @classmethod
+    def metals_fluctuation(cls) -> str:
+        return ('https://metals-api.com/api/fluctuation?' +
+            f'{cls._GOLD_API_KEY_PARAM}={cls._GOLD_API_KEY}')
     @classmethod
     def crypto(cls) -> str:
         return 'https://api.coinlore.net/api/tickers/'
@@ -27,7 +36,7 @@ class ArrowLiterals:
     _RED = '\033[31m'
     _GREEN = '\033[32m'
     _ENDC = '\033[0m'
-    
+
     @classmethod
     def arrow_up(cls) -> str:
         return f'{cls._GREEN}\u25B2{cls._ENDC}'
@@ -70,10 +79,38 @@ def crypto_currency_parser(s):
     except KeyError:
         raise argparse.ArgumentTypeError(f'invalid {CryptoCurrency.__name__} value \'{s}\'')
 
-def gold_price():
-    resp = requests.get(Urls.metals())
+def gold_trend(start_date, end_date) -> str:
+    gold_symbol = 'XAU'
+    params = dict()
+    params['start_date'] = start_date
+    params['end_date'] = end_date
+    params['type'] = 'weekly'
+    params['symbols'] = gold_symbol
+    resp = requests.get(Urls.metals_fluctuation(), params = params)
     if resp.status_code != 200:
         raise ValueError('GET error {}'.format(resp.status_code))
+    json_resp = resp.json()
+    return json_resp['rates'][f'{start_date}:{end_date}'][gold_symbol]['change_pct']
+
+
+def gold_price():
+    params = dict()
+    params['symbols'] = 'XAU'
+    resp = requests.get(Urls.metals_price(), params = params)
+    if resp.status_code != 200:
+        raise ValueError('GET error {}'.format(resp.status_code))
+    json_resp = resp.json()
+    rate = json_resp['rates']['XAU']
+    base = json_resp['base']
+    unit = json_resp['unit']
+    end_date = date.today()
+    week_trend = gold_trend(end_date - timedelta(days = 7), end_date)
+    day_trend = gold_trend(end_date - timedelta(days = 1), end_date)
+    row = []
+    row.append(f'Gold (XAU): {1/rate:.2f} {base} {unit}')
+    row.append(f'24h {format_trend(day_trend)}')
+    row.append(f'7d {format_trend(week_trend)}')
+    print(', '.join(row))
 
 if __name__ == '__main__':
     default_currencies = [CryptoCurrency.BTC, CryptoCurrency.ETH, CryptoCurrency.ADA]
@@ -81,16 +118,20 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Show asset prices')
     parser = argparse.ArgumentParser(description='Show asset prices')
     parser.add_argument(
-                '-c', 
+                '-c',
                 '--crypto-currencies',
                 nargs='+',
                 type=lambda s: crypto_currency_parser(s),
                 help=f'show prices for crypto currencies (default: {default_currencies_help})')
     parser.add_argument('-mc', '--market-capitalization', action='store_true',
                             help='show market capitalization')
+    parser.add_argument('-g', '--gold-price', action='store_true',
+                            help='show gold price')
 
     args = parser.parse_args()
-    if args.crypto_currencies:
+    if args.gold_price:
+        gold_price()
+    elif args.crypto_currencies:
         asset_values(args.crypto_currencies, args.market_capitalization)
     else:
         asset_values(default_currencies, args.market_capitalization)
