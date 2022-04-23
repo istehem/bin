@@ -126,7 +126,6 @@ if __name__ == '__main__':
     default_currencies = [CryptoCurrency.BTC, CryptoCurrency.ETH, CryptoCurrency.ADA]
     default_currencies_help = ', '.join([ str(c) for c in default_currencies ])
     parser = argparse.ArgumentParser(description='Show asset prices')
-    parser = argparse.ArgumentParser(description='Show asset prices')
     parser.add_argument(
                 '-c',
                 '--crypto-currencies',
