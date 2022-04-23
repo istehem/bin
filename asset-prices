@@ -17,6 +17,12 @@ class CryptoCurrency(Enum):
     def __str__(self):
         return str(self.value)
 
+@unique
+class Metals(Enum):
+    XAU = 'XAU'
+    def __str__(self):
+        return str(self.value)
+
 class Urls():
     _GOLD_API_KEY = 'k2p0hdizqchkv78o18e5za0k4zl1idzj36e8mow8354h95uxf85uzptvrjom'
     _GOLD_API_KEY_PARAM = 'access_key'
@@ -80,34 +86,33 @@ def crypto_currency_parser(s):
         raise argparse.ArgumentTypeError(f'invalid {CryptoCurrency.__name__} value \'{s}\'')
 
 def gold_trend(start_date, end_date) -> str:
-    gold_symbol = 'XAU'
     params = dict()
     params['start_date'] = start_date
     params['end_date'] = end_date
     params['type'] = 'weekly'
-    params['symbols'] = gold_symbol
+    params['symbols'] = Metals.XAU
     resp = requests.get(Urls.metals_fluctuation(), params = params)
     if resp.status_code != 200:
         raise ValueError('GET error {}'.format(resp.status_code))
     json_resp = resp.json()
-    return json_resp['rates'][f'{start_date}:{end_date}'][gold_symbol]['change_pct']
+    return json_resp['rates'][f'{start_date}:{end_date}'][str(Metals.XAU)]['change_pct']
 
 
 def gold_price():
     params = dict()
-    params['symbols'] = 'XAU'
+    params['symbols'] = Metals.XAU
     resp = requests.get(Urls.metals_price(), params = params)
     if resp.status_code != 200:
         raise ValueError('GET error {}'.format(resp.status_code))
     json_resp = resp.json()
-    rate = json_resp['rates']['XAU']
+    rate = json_resp['rates'][str(Metals.XAU)]
     base = json_resp['base']
     unit = json_resp['unit']
     end_date = date.today()
     week_trend = gold_trend(end_date - timedelta(days = 7), end_date)
     day_trend = gold_trend(end_date - timedelta(days = 1), end_date)
     row = []
-    row.append(f'Gold (XAU): {1/rate:.2f} {base} {unit}')
+    row.append(f'Gold ({Metals.XAU}): {1/rate:.2f} {base} {unit}')
     row.append(f'24h {format_trend(day_trend)}')
     row.append(f'7d {format_trend(week_trend)}')
     print(', '.join(row))
