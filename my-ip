@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
-from telnetlib import Telnet
+import telnetlib3
+import asyncio
 import json
 import requests
 import argparse
@@ -14,8 +15,13 @@ def getmyip_http():
 
 
 def getmyip_telnet():
-    with Telnet('telnetmyip.com') as tn:
-        return json.loads(tn.read_all())['ip']
+    loop = asyncio.new_event_loop()
+    coro = telnetlib3.open_connection('telnetmyip.com', shell=telnet_shell)
+    loop.run_until_complete(coro)
+
+async def telnet_shell(reader, _):
+    answer = await reader.read()
+    print(json.loads(answer)['ip'])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Retrieve my ip address')
@@ -24,6 +30,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     if args.telnet:
-        print(getmyip_telnet())
+        getmyip_telnet()
     else:
         print(getmyip_http())
