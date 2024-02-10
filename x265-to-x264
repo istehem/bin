@@ -1,0 +1,56 @@
+#!/usr/bin/python3
+
+import argparse
+import os
+
+class Colors:
+    GREEN = '\033[32m'
+    ENDC = '\033[0m'
+
+def validate(filenames):
+    errors = []
+    for f in filenames:
+        if not is_file(f):
+            errors.append(f'{f} is not a file')
+    return errors
+
+def is_file(path):
+    return os.path.isfile(path)
+
+def process(filenames, verbose, dry_run):
+    for filename in filenames:
+        outputfilename = filename.replace('265', '264')
+
+        if outputfilename == filename:
+            name, extension = os.path.splitext(filename)
+            outputfilename = name + "_x264" + extension
+
+        converter_command =  f'ffmpeg -i "{filename}" -map 0 -c:v libx264 -crf 18 -vf format=yuv420p -c:a copy "{outputfilename}"'
+
+        if verbose or dry_run:
+            lines = [f'{converter_command} {Colors.GREEN}',
+                     f'{filename}  -->  {outputfilename}{Colors.ENDC}',
+                     '']
+            print('\n'.join(lines))
+
+        if not dry_run:
+            exit_code = os.system(converter_command)
+            if exit_code:
+                raise RuntimeError(f'error processing file {filename}')
+        
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='convert video files from x265 to 264')
+    parser.add_argument('input_files', metavar='file', nargs='+', 
+                help='video file to be converted')
+    parser.add_argument('-d', '--dry-run', action='store_true',
+                help='don\'t actually convert files; just print pontential results')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                help='explain what is being done')
+    args = parser.parse_args()
+    errors = validate(args.input_files)
+    if errors:
+        print('Validation errors:\n' + ',\n'.join(errors))
+    else:
+        process(args.input_files, args.verbose, args.dry_run)
+
+
