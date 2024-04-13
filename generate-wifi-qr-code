@@ -52,7 +52,6 @@ def get_network():
     if ssid_key not in network or password_key not in network or network_type_key not in network:
         raise ConfigNotFound
 
-
     return Network(network[ssid_key],
                    NetworkType[network[network_type_key]],
                    network[password_key])
@@ -68,7 +67,3 @@ if __name__ == '__main__':
     except ConfigNotFound as e:
         create_default_config()
         print(f'please fill out the config file: {WIFI_CONFIG}')
-
-
-
-
