@@ -1,0 +1,74 @@
+#!/usr/bin/python3
+
+from enum import Enum
+import argparse
+import qrcode
+import configparser
+from collections import namedtuple
+
+WIFI_CONFIG = 'network.config'
+
+Network = namedtuple('Network', 'ssid network_type password')
+
+class ConfigNotFound(Exception):
+    pass
+
+class NetworkType(Enum):
+    WEP = "WEP"
+    WPA = "WPA"
+
+    def __str__(self):
+        return self.value
+
+def get_text(ssid, network_type, password):
+    #Additionally 'H:<true|false|blank>' may be needed
+    text = f'WIFI:S:{ssid};T:{network_type};P:{password};;'
+    return text
+
+def generate_code(filename, network):
+    img = qrcode.make(get_text(network.ssid, network.network_type, network.password))
+    img.save(filename)
+
+def create_default_config():
+    config = configparser.ConfigParser()
+    config['network'] = dict()
+    config['network']['ssid'] = '<your_ssid>'
+    config['network']['password'] = '<network_password>'
+    config['network']['network_type'] = 'WPA'
+    with open(WIFI_CONFIG, 'w') as configfile:
+         config.write(configfile)
+
+
+def get_network():
+    config = configparser.ConfigParser()
+    config.read(WIFI_CONFIG)
+    network_key = 'network'
+    if not network_key in config:
+        raise ConfigNotFound
+    network = config[network_key]
+    ssid_key = 'ssid'
+    password_key = 'password'
+    network_type_key = 'network_type'
+    if ssid_key not in network or password_key not in network or network_type_key not in network:
+        raise ConfigNotFound
+
+
+    return Network(network[ssid_key],
+                   NetworkType[network[network_type_key]],
+                   network[password_key])
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Create a wifi qr-code')
+    parser.add_argument('filename', help='output filename')
+
+    args = parser.parse_args()
+    try:
+        network = get_network()
+        generate_code(args.filename, network)
+    except ConfigNotFound as e:
+        create_default_config()
+        print(f'please fill out the config file: {WIFI_CONFIG}')
+
+
+
+
