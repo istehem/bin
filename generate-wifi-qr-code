@@ -32,7 +32,8 @@ class NetworkType(Enum):
         for network_type in cls:
             if network_type.value == as_string:
                 return network_type
-        raise NetworkTypeError(as_string)
+        message = f'invalid network type: {as_string}'
+        raise NetworkTypeError(message)
 
 def get_text(ssid, network_type, password):
     #Additionally 'H:<true|false|blank>' may be needed
@@ -52,7 +53,6 @@ def create_default_config():
     with open(WIFI_CONFIG, 'w') as configfile:
          config.write(configfile)
 
-
 def get_network():
     config = configparser.ConfigParser()
     config.read(WIFI_CONFIG)
@@ -63,7 +63,7 @@ def get_network():
     ssid_key = 'ssid'
     password_key = 'password'
     network_type_key = 'network_type'
-    if ssid_key not in network or password_key not in network or network_type_key not in network:
+    if any(key not in network for key in [ssid_key, password_key, network_type_key]):
         raise ConfigNotFound
 
     return Network(network[ssid_key],
@@ -82,5 +82,5 @@ if __name__ == '__main__':
         create_default_config()
         print(f'please fill out the config file: {WIFI_CONFIG}')
     except NetworkTypeError as e:
-        print(f'invalid network type: {e.message}')
+        print(e.message, file=sys.stderr)
         sys.exit(1)
