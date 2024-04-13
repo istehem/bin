@@ -1,10 +1,12 @@
 #!/usr/bin/python3
 
-from enum import Enum
-import argparse
-import qrcode
-import configparser
+from enum import Enum, unique
 from collections import namedtuple
+
+import sys
+import argparse
+import configparser
+import qrcode
 
 WIFI_CONFIG = 'network.config'
 
@@ -13,12 +15,24 @@ Network = namedtuple('Network', 'ssid network_type password')
 class ConfigNotFound(Exception):
     pass
 
+class NetworkTypeError(Exception):
+    def __init__(self, message):
+        self.message = message
+
+@unique
 class NetworkType(Enum):
     WEP = "WEP"
     WPA = "WPA"
 
     def __str__(self):
         return self.value
+
+    @classmethod
+    def from_str(cls, as_string):
+        for network_type in cls:
+            if network_type.value == as_string:
+                return network_type
+        raise NetworkTypeError(as_string)
 
 def get_text(ssid, network_type, password):
     #Additionally 'H:<true|false|blank>' may be needed
@@ -53,7 +67,7 @@ def get_network():
         raise ConfigNotFound
 
     return Network(network[ssid_key],
-                   NetworkType[network[network_type_key]],
+                   NetworkType.from_str(network[network_type_key]),
                    network[password_key])
 
 if __name__ == '__main__':
@@ -67,3 +81,6 @@ if __name__ == '__main__':
     except ConfigNotFound as e:
         create_default_config()
         print(f'please fill out the config file: {WIFI_CONFIG}')
+    except NetworkTypeError as e:
+        print(f'invalid network type: {e.message}')
+        sys.exit(1)
