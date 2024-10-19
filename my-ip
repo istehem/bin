@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-import telnetlib3
 import asyncio
 import json
 import requests
@@ -14,22 +13,7 @@ def getmyip_http():
     return f'{parsed_body["ip"]} ({parsed_body["city"]}, {parsed_body["region"]}, {parsed_body["country"]})'
 
 
-def getmyip_telnet():
-    loop = asyncio.new_event_loop()
-    coro = telnetlib3.open_connection('telnetmyip.com', shell=telnet_shell)
-    loop.run_until_complete(coro)
-
-async def telnet_shell(reader, _):
-    answer = await reader.read()
-    print(json.loads(answer)['ip'])
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Retrieve my ip address')
-    parser.add_argument('-t', '--telnet', action='store_true',
-                help='use telnet instead of http')
-
-    args = parser.parse_args()
-    if args.telnet:
-        getmyip_telnet()
-    else:
-        print(getmyip_http())
+    _args = parser.parse_args()
+    print(getmyip_http())
